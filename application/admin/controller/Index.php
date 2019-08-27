@@ -1,13 +1,9 @@
 <?php
 namespace app\admin\controller;
 
-use think\Controller;
-class Index extends Controller
+use app\admin\model\User;
+class Index extends AdminBaseController
 {
-    public function _initialize()
-    {
-        $this->assign('WEB_ROOT', 'http://www.tp50.com/');
-    }
 
     public function main()
     {
@@ -20,6 +16,7 @@ class Index extends Controller
      */
     public function index()
     {
+        $users = User::all(['is_delete'=>0])->toArray();
         return $this->fetch('index/index',['name'=>'thinkphp']);
     }
 }

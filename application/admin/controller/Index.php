@@ -16,7 +16,9 @@ class Index extends AdminBaseController
      */
     public function index()
     {
-        $users = User::all(['is_delete'=>0])->toArray();
+        $users = new User();
+        $userList = $users->getUserList();
+
         return $this->fetch('index/index',['name'=>'thinkphp']);
     }
 }

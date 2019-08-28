@@ -15,13 +15,34 @@ class User extends Model
         //TODO:自定义的初始化
     }
 
+    public function delPerm($perm_id)
+    {
+        $list = Db::name("perm")->where('id', $perm_id)->update(['is_delete'=>1]);
+        return $list;
+    }
+
+    public function addPerm($permInfo)
+    {
+        $data = $permInfo;
+        $newPermId = Db::name('perm')->insertGetId($data);
+        return $newPermId;
+    }
+
+
     public function getUserList()
     {
-        return self::all(['is_delete'=>0])->toArray();
+        $list = Db::name("user")->where(['is_delete'=>0])->select();
+        return $list;
     }
 
     public function getRoleList(){
         $list = Db::name("role")->where(['is_delete'=>0])->select();
+        return $list;
+    }
+
+    public function getPermList()
+    {
+        $list = Db::name("perm")->where(['is_delete'=>0])->select();
         return $list;
     }
 }

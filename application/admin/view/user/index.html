@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {include file="common/header" /}
+</head>
+<body class="childrenBody">
+<div class="layui-row">
+    <form class="layui-form">
+        <blockquote class="layui-elem-quote quoteBox">
+            <div class="layui-inline">
+                <div class="layui-input-inline">
+                    <input type="text" class="layui-input searchVal" placeholder="请输入搜索的内容">
+                </div>
+                <a class="layui-btn search_btn" data-type="reload">搜索</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-normal addNews_btn">添加用户</a>
+            </div>
+            <div class="layui-inline">
+                <a class="layui-btn layui-btn-danger layui-btn-normal delAll_btn">批量删除</a>
+            </div>
+        </blockquote>
+    </form>
+    <table id="role-list" lay-filter="role-list"></table>
+</div>
+{include file="common/footer" /}
+</body>
+
+<script type="text/html" id="roletoolbar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script>
+    var main_url = WEB_ROOT;
+
+    layui.use(['form','layer','table','laytpl'], function(){
+        var element = layui.element;
+        var $ = layui.jquery;
+        var table = layui.table;
+        var layer = top.layer!="undefined"?top.layer:layui.layer;
+
+        //第一个实例
+        table.render({
+            elem: '#role-list'
+            ,url: main_url + "/admin/user/getUserList" //数据接口
+            ,method:"post"
+            ,toolbar:"default"
+            ,height:"full-50"
+            ,page: false //开启分页
+            ,cols: [[ //表头
+                {field: 'id', title: 'ID', width:"10%", sort: true, fixed: 'left'}
+                ,{field: 'uname', title: '帐户名', width: "20%", sort: true}
+                ,{field: 'nickname', title: '呢称', width: "20%", sort: true}
+                ,{field: 'is_delete', title: '状态', width: "10%", sort: true}
+                ,{field: '', title: '操作', width: "40%", toolbar: '#roletoolbar', align:'center' }
+            ]]
+        });
+
+        table.on('tool(role-list)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+            var data = obj.data;
+            var layEvent = obj.event;
+            var tr = obj.tr;
+            if(layEvent === 'edit'){ //编辑
+                //do somehing
+            } else if(layEvent === 'edit_perm'){ //编辑权限
+                layer.open({
+                    type: 2
+                    ,title: '编辑权限'
+                    ,content: 'roleperm.html'
+                    ,area: ['420px', '420px']
+                    ,btn: ['确定', '取消']
+                    ,yes: function(index, layero){
+                        var iframeWindow = window['layui-layer-iframe'+ index]
+                                ,submitID = 'LAY-user-back-submit'
+                                ,submit = layero.find('iframe').contents().find('#'+ submitID);
+
+                        //监听提交
+                        iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
+                            var field = data.field; //获取提交的字段
+
+                            //提交 Ajax 成功后，静态更新表格中的数据
+                            //$.ajax({});
+                            table.reload('LAY-user-front-submit'); //数据刷新
+                            layer.close(index); //关闭弹层
+                        });
+
+                        submit.trigger('click');
+                    }
+                });
+            } else if(layEvent === 'del'){ //删除
+                layer.confirm('真的删除行么', function(index){
+                    obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+                    del_role(data.id);
+                    layer.close(index);
+                    //向服务端发送删除指令
+                });
+            }
+        });
+
+
+        //添加用户
+        function addUser(edit){
+            var index = layui.layer.open({
+                title : "添加用户",
+                type : 2,
+                content : "userAdd.html",
+                success : function(layero, index){
+                    var body = layui.layer.getChildFrame('body', index);
+                    if(edit){
+                        body.find(".userName").val(edit.userName);  //登录名
+                        body.find(".userEmail").val(edit.userEmail);  //邮箱
+                        body.find(".userSex input[value="+edit.userSex+"]").prop("checked","checked");  //性别
+                        body.find(".userGrade").val(edit.userGrade);  //会员等级
+                        body.find(".userStatus").val(edit.userStatus);    //用户状态
+                        body.find(".userDesc").text(edit.userDesc);    //用户简介
+                        form.render();
+                    }
+                    setTimeout(function(){
+                        layui.layer.tips('点击此处返回用户列表', '.layui-layer-setwin .layui-layer-close', {
+                            tips: 3
+                        });
+                    },500)
+                }
+            })
+            layui.layer.full(index);
+            window.sessionStorage.setItem("index",index);
+            //改变窗口大小时，重置弹窗的宽高，防止超出可视区域（如F12调出debug的操作）
+            $(window).on("resize",function(){
+                layui.layer.full(window.sessionStorage.getItem("index"));
+            })
+        }
+        $(".addNews_btn").click(function(){
+            addUser();
+        })
+
+    });
+
+
+</script>
+</html>

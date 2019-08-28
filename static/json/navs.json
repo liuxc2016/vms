@@ -38,7 +38,7 @@
 		{
 			"title": "用户中心",
 			"icon": "&#xe612;",
-			"href": "page/user/userList.html",
+			"href": "/admin/user/index",
 			"spread": false
 		},
 		{

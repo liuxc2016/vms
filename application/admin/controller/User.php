@@ -16,10 +16,12 @@ class User extends AdminBaseController
      */
     public function index()
     {
-        $userModel = new UserModel();
-        $userList = $userModel->getUserList();
+        return $this->fetch('user/index');
+    }
 
-        return $this->fetch('index/index',['name'=>'thinkphp']);
+    public function userAdd()
+    {
+        return $this->fetch('user/userAdd');
     }
 
     public function role(){
@@ -29,6 +31,21 @@ class User extends AdminBaseController
 
     public function roleperm(){
         return $this->fetch("user/roleperm");
+
+    }
+
+    public function getUserList()
+    {
+        $userModel = new UserModel();
+        $roleList = $userModel->getUserList();
+        //$this->ajaxReturn(['code'=>0, 'msg'=>0, 'count'=>count($ret), 'data'=>$ret]);
+        $data = [
+            'code'=>0,
+            'msg'=>0,
+            'count'=>count($roleList),
+            'data'=>$roleList
+        ];
+        return json($data, 200);
 
     }
 
@@ -46,4 +63,6 @@ class User extends AdminBaseController
         return json($data, 200);
 
     }
+
+
 }

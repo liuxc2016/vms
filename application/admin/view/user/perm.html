@@ -17,15 +17,7 @@
         -ms-box-sizing: border-box; /*IE8*/
         box-sizing: border-box; /*W3C标准(IE9+，Safari5.1+,Chrome10.0+,Opera10.6+都符合box-sizing的w3c标准语法)*/
     }
-    .dHead {
-        height:85px;
-        width:100%;
-        position: fixed;
-        z-index:5;
-        top:0;
-        overflow-x: auto;
-        padding: 10px;
-    }
+
     .dBody {
         width:100%;
         overflow:auto;
@@ -34,22 +26,14 @@
         z-index:10;
         bottom:5px;
     }
-    .layui-btn-xstree {
-        height: 35px;
-        line-height: 35px;
-        padding: 0px 5px;
-        font-size: 12px;
-    }
 </style>
 <body>
 <div style="height: 100%">
     <blockquote class="layui-elem-quote quoteBox">
         <div class="">
-            <a class="layui-btn layui-btn-primary layui-btn-xs layui-btn-xstree"  onclick="reload()">reload</a>
-            <a class="layui-btn layui-btn-primary layui-btn-xs layui-btn-xstree"  onclick="add(null);">新增一行</a>
-            <a class="layui-btn layui-btn-primary layui-btn-xs layui-btn-xstree"  onclick="getCheckData();">获取选中行数据</a>
-            <a class="layui-btn layui-btn-primary layui-btn-xs layui-btn-xstree"  onclick="getCheckLength();">获取选中数目</a>
-            <a class="layui-btn layui-btn-primary layui-btn-xs layui-btn-xstree"  onclick="test();">test</a>
+            <a class="layui-btn layui-btn-info layui-btn-m"  onclick="reload()">刷新</a>
+            <!--<a class="layui-btn layui-btn-error layui-btn-m"  onclick="getCheckData();">获取选中行数据</a>-->
+            <!--<a class="layui-btn layui-btn-danger layui-btn-m"  onclick="getCheckLength();">获取选中数目</a>-->
         </div>
     </blockquote>
     <div class="dBody">
@@ -75,6 +59,7 @@
             ,elem: '#'+tableId
             ,idField:'id'
             ,url:'/admin/user/permList'
+            ,method:'get'
             ,cellMinWidth: 100
             ,treeId:'id'//树形id字段名称
             ,treeUpId:'pid'//树形父id字段名称
@@ -83,13 +68,13 @@
                 {type:'checkbox',sort:true},
                 {field:'id',width:100, title: '权限id'}
                 ,{field:'name', edit:'text',width:350, title: '权限名称'}
-                ,{field:'pid', title: '上级id', width:50}
+//                ,{field:'pid', title: '上级id', width:50 , hide:true}
                 ,{width:"30%",title: '操作', align:'center'/*toolbar: '#barDemo'*/
                     ,templet: function(d){
                         var html='';
-                        var addBtn='<a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="add_sub">添加子权限</a>';
-                        var editBtn='<a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">编辑</a>';
-                        var delBtn='<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>';
+                        var addBtn='<a class="layui-btn layui-btn-info layui-btn-sm" lay-event="add_sub">添加子权限</a>';
+                        var editBtn='<a class="layui-btn layui-btn-normal layui-btn-sm" lay-event="edit">编辑</a>';
+                        var delBtn='<a class="layui-btn layui-btn-danger layui-btn-sm" lay-event="del">删除</a>';
                         return addBtn + editBtn + delBtn;
                     }
                 }
@@ -104,6 +89,14 @@
             }else if(obj.event ==="add_sub"){
                 console.log(obj)
                 add_sub(obj);
+            }else if(obj.event ==="edit"){
+                id = obj.data.id;
+                layer.open({
+                    type: 2
+                    ,title: '编辑权限'
+                    ,content: 'editperm?perm_id='+id
+                    ,area: ['400px', '500px']
+                });
             }
         });
 
@@ -132,40 +125,24 @@
             });
 
         }
+
+        var i = Math.ceil(Math.random()*100);
+        //添加
+        function add_sub(pObj) {
+            var pdata=pObj?pObj.data:null;
+            var param={};
+            var newI = ++i;
+            param.name=pdata.name+"_子_"+ String(newI);
+            param.level = pdata.level + 1;
+            param.pid=pdata?pdata.id:null;
+
+            $.post("/admin/user/addPerm",{"perm":param}, function(data){
+                console.log(data);
+                param.id = data.perm_id;
+                treeGrid.addRow(tableId,pdata?pdata[treeGrid.config.indexName]+1:0,param);
+            });
+        }
     });
-
-
-
-
-    var i=1000000;
-    //添加
-    function add_sub(pObj) {
-        var pdata=pObj?pObj.data:null;
-        var param={};
-        var newI = ++i;
-        param.name=pdata.name+"_子_"+ String(newI);
-        param.level = pdata.level + 1;
-        param.pid=pdata?pdata.id:null;
-
-        $.post("/admin/user/addPerm",{"perm":param}, function(data){
-            console.log(data);
-            param.id = data.perm_id;
-            treeGrid.addRow(tableId,pdata?pdata[treeGrid.config.indexName]+1:0,param);
-        });
-    }
-
-    function print() {
-        console.log(treeGrid.cache[tableId]);
-        msg("对象已打印，按F12，在控制台查看！");
-    }
-
-    function msg(msg) {
-        var loadIndex=layer.msg(msg, {
-            time:3000
-            ,offset: 'b'//顶部
-            ,shade: 0
-        });
-    }
 
     function openorclose() {
         var map=treeGrid.getDataMap(tableId);
@@ -178,10 +155,7 @@
                 ,data = checkStatus.data;
         layer.alert(JSON.stringify(data));
     }
-    function radioStatus() {
-        var data = treeGrid.radioStatus(tableId)
-        layer.alert(JSON.stringify(data));
-    }
+
     function getCheckLength() {
         var checkStatus = treeGrid.checkStatus(tableId)
                 ,data = checkStatus.data;
@@ -205,8 +179,6 @@
 
     function test() {
         console.log(treeGrid.cache[tableId],treeGrid.getClass(tableId));
-
-
         /*var map=treeGrid.getDataMap(tableId);
          var o= map['102'];
          o.name="更新";

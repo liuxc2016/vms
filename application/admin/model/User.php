@@ -15,6 +15,12 @@ class User extends Model
         //TODO:自定义的初始化
     }
 
+    public function getPerm($perm_id)
+    {
+        $list = Db::name("perm")->where('id', $perm_id)->find();
+        return $list;
+    }
+
     public function delPerm($perm_id)
     {
         $list = Db::name("perm")->where('id', $perm_id)->update(['is_delete'=>1]);
@@ -26,6 +32,18 @@ class User extends Model
         $data = $permInfo;
         $newPermId = Db::name('perm')->insertGetId($data);
         return $newPermId;
+    }
+
+    public function savePerm($permInfo)
+    {
+        $id = $permInfo['id'];
+        $data = [
+            'name'=>$permInfo['name'],
+            'link'=>$permInfo['link'],
+            'icon'=>$permInfo['icon'],
+        ];
+        $ret = Db::name('perm')->where("id", $id)->update($data);
+        return $ret;
     }
 
 

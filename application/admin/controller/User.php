@@ -40,6 +40,22 @@ class User extends AdminBaseController
 
     }
 
+    public function editPerm()
+    {
+        if(request()->isPost()){
+            $params = request()->param();
+            $permInfo = $params;
+            $userModel = new UserModel();
+            $ret = $userModel->savePerm($permInfo);
+            return json(['msg'=>'ok', 'ret'=>$ret]);
+        }else{
+            $permId = request()->get("perm_id");
+            $userModel = new UserModel();
+            $permInfo = $userModel->getPerm($permId);
+            return $this->fetch("user/editPerm", ['perm_info'=>$permInfo]);
+        }
+    }
+
     public function addPerm(Request $request)
     {
         $params = $request->param();
@@ -48,6 +64,7 @@ class User extends AdminBaseController
         $perm_id = $userModel->addPerm($perm);
         return json(['perm_id'=>$perm_id]);
     }
+
     public function delPerm()
     {
         $permId = request()->param("perm_id");

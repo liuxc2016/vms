@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {include file="common/header" /}
+</head>
+<body class="childrenBody">
+<form class="layui-form" style="width:80%;">
+    <div class="layui-form-item layui-row layui-col-xs12">
+        <label class="layui-form-label">权限名</label>
+        <div class="layui-input-block">
+            <input value="{$perm_info.id}" name="id" id="id" type="hidden">
+            <input value="{$perm_info.name}" type="text" name="name" id="name" class="layui-input" lay-verify="required" placeholder="请输入登录名">
+        </div>
+    </div>
+    <div class="layui-form-item layui-row layui-col-xs12">
+        <label class="layui-form-label">链接</label>
+        <div class="layui-input-block">
+            <input value="{$perm_info.link}"  type="text" id="link" class="layui-input" lay-verify="" placeholder="请输入邮箱">
+        </div>
+    </div>
+    <div class="layui-row">
+        <div class="magb15 layui-col-md4 layui-col-xs12">
+            <label class="layui-form-label">图标</label>
+            <div class="layui-input-block">
+                <input value="{$perm_info.icon}"  type="text" id="icon" class="layui-input" lay-verify="" placeholder="请选择图标">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item layui-row layui-col-xs12">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-info" lay-submit="" lay-filter="editPerm">保  存</button>
+            <button type="reset" class="layui-btn layui-btn-danger">取  消</button>
+        </div>
+    </div>
+</form>
+
+
+{include file="common/footer" /}
+<script>
+    layui.use(['form','layer'],function(){
+        var form = layui.form;
+        var layer = parent.layer === undefined ? layui.layer : top.layer;
+        var $ = layui.jquery;
+
+        form.on("submit(editPerm)",function(data){
+            //弹出loading
+            var index = top.layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
+            var postData = {
+                id   : $("#id").val(),
+                name : $("#name").val(),  //权限名
+                link : $("#link").val(),  //权限链接
+                icon : $("#icon").val(),
+                mos  : 1
+            };
+             $.post("/admin/user/editPerm",postData,function(res){
+                 console.log(res);
+             });
+            setTimeout(function(){
+                top.layer.close(index);
+                top.layer.msg("权限编辑成功！");
+                layer.closeAll("iframe");
+                //刷新父页面
+                parent.location.reload();
+            },2000);
+            return false;
+        });
+
+        //格式化时间
+        function filterTime(val){
+            if(val < 10){
+                return "0" + val;
+            }else{
+                return val;
+            }
+        }
+        //定时发布
+        var time = new Date();
+        var submitTime = time.getFullYear()+'-'+filterTime(time.getMonth()+1)+'-'+filterTime(time.getDate())+' '+filterTime(time.getHours())+':'+filterTime(time.getMinutes())+':'+filterTime(time.getSeconds());
+
+    })
+</script>
+</body>
+</html>

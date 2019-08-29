@@ -10,30 +10,28 @@ use app\admin\model\User as UserModel;
 class AdminBaseController extends Controller
 {
     protected $beforeActionList = [
-        //'initUser' =>  ['except'=>'login'],
+        'initUser' =>  ['except'=>'login'],
     ];
 
     protected $permList;
     public $userInfo;
 
-    protected function initUser(){
-//        if(Session::get("userInfo")){
-//            $this->userInfo = Session::get("userInfo");
-//            $this->permList = Session::get("permList");
-//        }
-//
-//        if(empty($this->userInfo) or empty($this->userInfo['id']) or empty($this->userInfo['role_id'])){
-//            $this->redirect("/admin/index/login");
-//        }
-        $user = new UserModel();
-        $this->userInfo = $user->getUserInfo(2);
-        $this->permList = $user->getRolePermList($this->userInfo['role_id']);
+    protected function inituser(){
+        if(Session::get("userInfo")){
+            $this->userInfo = Session::get("userInfo");
+            $this->permList = Session::get("permList");
+        }
+
+        if(empty($this->userInfo) or empty($this->userInfo['id']) or empty($this->userInfo['role_id'])){
+            $this->redirect("/admin/index/login");
+        }
+        $this->assign('userInfo', $this->userInfo);
     }
 
     public function _initialize()
     {
         $this->assign('WEB_ROOT', Config::get("web_url"));
-        $this->assign('WEB_TITLE', 'tos');
+        $this->assign('WEB_TITLE', Config::get("app_name"));
     }
 
     //获取一级菜单

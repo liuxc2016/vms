@@ -52,6 +52,18 @@ class User extends Model
         return $ret;
     }
 
+    public function login($uname, $upass)
+    {
+        $userInfo = Db::name("user")->where('uname',$uname)
+            ->where( 'upass', $upass)
+            ->find();
+        if(empty($userInfo)){
+            return false;
+        }elseif ($userInfo['is_delete'] != 0){
+            return false;
+        }
+        return $userInfo;
+    }
 
     public function getUserList()
     {

@@ -2,6 +2,7 @@
 namespace app\admin\controller;
 
 use app\admin\model\User as UserModel;
+use think\Db;
 use think\Request;
 class User extends AdminBaseController
 {
@@ -17,7 +18,8 @@ class User extends AdminBaseController
      */
     public function index()
     {
-        return $this->fetch('user/index');
+        $top_menus = Db::name("perm")->where(['is_delete'=>0, 'pid'=>0])->select();
+        return $this->fetch('user/index', ['top_menus'=>$top_menus]);
     }
 
     public function role(){
@@ -27,6 +29,32 @@ class User extends AdminBaseController
 
     public function perm(){
         return $this->fetch("user/perm");
+    }
+
+    public function getMenuJson(){
+        $top_menus = Db::name("perm")->where(['is_delete'=>0, 'pid'=>0])->select();
+        $ret = [];
+        foreach ($top_menus as $top_menu){
+            $ret[$top_menu['name']] = $this->getChild($top_menu['id']);
+        }
+        return json(['main_menu'=>$ret]);
+    }
+
+    private function getChild($pid){
+        $d = Db::name("perm")->where(['is_delete'=>0, 'pid'=>$pid])->select();
+        $ret = [];
+        foreach ($d as $v){
+            $m['title'] = $v['title'];
+            $m['icon'] = $v['icon'];
+            $m['href'] = $v['link'];
+            $m['spread'] = false;
+            $m['target'] = "";
+            if($v['level'] < 3 ){
+                $m['children'] = $this->getChild($v['id']);
+            }
+            $ret[] = $m;
+        }
+        return $ret;
     }
 
     public function userAdd()

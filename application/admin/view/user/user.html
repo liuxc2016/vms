@@ -2,6 +2,12 @@
 <html>
 <head>
     {include file="common/header" /}
+    <style>
+        img.head_img{
+            height: 25px;
+            width:25px;
+        }
+    </style>
 </head>
 <body class="childrenBody">
 <div class="layui-row">
@@ -45,53 +51,58 @@
             elem: '#role-list'
             ,url: main_url + "/admin/user/getUserList" //数据接口
             ,method:"post"
-            ,toolbar:"default"
+            ,toolbar:false
             ,height:"full-50"
             ,page: false //开启分页
             ,cols: [[ //表头
                 {field: 'id', title: 'ID', width:"10%", sort: true, fixed: 'left'}
-                ,{field: 'uname', title: '帐户名', width: "20%", sort: true}
-                ,{field: 'nickname', title: '呢称', width: "20%", sort: true}
-                ,{field: 'is_delete', title: '状态', width: "10%", sort: true}
-                ,{field: '', title: '操作', width: "40%", toolbar: '#roletoolbar', align:'center' }
+                ,{field: 'uname', title: '帐户名', width: "10%"}
+                ,{field: 'nickname', title: '呢称', width: "10%", templet:function(d){
+                    $dhtml =  "<img src='" + d.head_img + "' class='head_img'/>"
+                    $dhtml += "<span class='nickname'>" + d.nickname + "</span>"
+                    return $dhtml;
+                }}
+                ,{field: 'is_delete', title: '状态', width: "10%", sort: true,align:"center", templet:function(d){
+                    if(d.is_delete == 0){
+                        return "<a class='layui-btn layui-btn-xs layui-btn-green'>正常</a>"
+                    }else if(d.is_delete == 1){
+                        return "<a class='layui-btn layui-btn-info layui-btn-xs'>已删除</a>"
+                    }else if(d.is_delete == 2){
+                        return "<a class='layui-btn layui-btn-danger layui-btn-xs'>已禁用</a>"
+                    }else{
+                        return d.is_delete
+                    }
+                }}
+                ,{field: 'role_name', title: '角色', width: "10%", sort: true}
+                ,{field: 'last_login_time', title: '最近登陆时间', width: "10%"}
+                ,{field: 'last_login_ip', title: '最近登陆ip', width: "10%"}
+                ,{field: 'add_time', title: '添加时间', width: "10%", sort: true}
+                ,{field: '', title: '操作', width: "15%", toolbar: '#roletoolbar', align:'center',fixed:'right' }
             ]]
         });
 
         table.on('tool(role-list)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
             var data = obj.data;
             var layEvent = obj.event;
-            var tr = obj.tr;
+            //var tr = obj.tr;
             if(layEvent === 'edit'){ //编辑
-                //do somehing
-            } else if(layEvent === 'edit_perm'){ //编辑权限
-                layer.open({
-                    type: 2
-                    ,title: '编辑权限'
-                    ,content: 'roleperm.html'
-                    ,area: ['420px', '420px']
-                    ,btn: ['确定', '取消']
-                    ,yes: function(index, layero){
-                        var iframeWindow = window['layui-layer-iframe'+ index]
-                                ,submitID = 'LAY-user-back-submit'
-                                ,submit = layero.find('iframe').contents().find('#'+ submitID);
-
-                        //监听提交
-                        iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
-                            var field = data.field; //获取提交的字段
-
-                            //提交 Ajax 成功后，静态更新表格中的数据
-                            //$.ajax({});
-                            table.reload('LAY-user-front-submit'); //数据刷新
-                            layer.close(index); //关闭弹层
-                        });
-
-                        submit.trigger('click');
-                    }
-                });
-            } else if(layEvent === 'del'){ //删除
+                addUser(data)
+            }  else if(layEvent === 'del'){ //删除
                 layer.confirm('真的删除行么', function(index){
                     obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
-                    del_role(data.id);
+
+                    $.post("/admin/user/del",{id:obj.data.id},function(res){
+                        console.log(res)
+                        if(res.status == 1){
+                            top.layer.alert(res.msg);
+                        }else{
+                            top.layer.close(index);
+                            top.layer.msg("用户添加成功！");
+                            table.reload();
+                        }
+                    });
+
+
                     layer.close(index);
                     //向服务端发送删除指令
                 });
@@ -104,16 +115,16 @@
             var index = layui.layer.open({
                 title : "添加用户",
                 type : 2,
-                content : "userAdd.html",
+                content : edit ? "userEdit":"userAdd",
                 success : function(layero, index){
                     var body = layui.layer.getChildFrame('body', index);
                     if(edit){
-                        body.find(".userName").val(edit.userName);  //登录名
-                        body.find(".userEmail").val(edit.userEmail);  //邮箱
-                        body.find(".userSex input[value="+edit.userSex+"]").prop("checked","checked");  //性别
-                        body.find(".userGrade").val(edit.userGrade);  //会员等级
+                        body.find(".id").val(edit.id);  //登录名
+                        body.find(".uname").val(edit.uname);  //登录名
+                        body.find(".upass").val(edit.upass);  //邮箱
+                        body.find(".nickname").val(edit.nickname);  //邮箱
                         body.find(".userStatus").val(edit.userStatus);    //用户状态
-                        body.find(".userDesc").text(edit.userDesc);    //用户简介
+                        body.find(".userRole").val(edit.userRole);    //用户状态
                         form.render();
                     }
                     setTimeout(function(){

@@ -7,17 +7,16 @@ layui.use(['form','layer'],function(){
         //弹出loading
         var index = top.layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
         // 实际使用时的提交信息
-        // $.post("上传路径",{
-        //     userName : $(".userName").val(),  //登录名
-        //     userEmail : $(".userEmail").val(),  //邮箱
-        //     userSex : data.field.sex,  //性别
-        //     userGrade : data.field.userGrade,  //会员等级
-        //     userStatus : data.field.userStatus,    //用户状态
-        //     newsTime : submitTime,    //添加时间
-        //     userDesc : $(".userDesc").text(),    //用户简介
-        // },function(res){
-        //
-        // })
+        $.post("/admin/user/userAdd",{
+            uname : $(".uname").val(),  //登录名
+            upass : $(".upass").val(),  //密码
+            is_delete : data.field.userGrade,  //会员等级
+            userStatus : data.field.userStatus,    //用户状态
+            newsTime : submitTime,    //添加时间
+            userDesc : $(".userDesc").text(),    //用户简介
+        },function(res){
+
+        })
         setTimeout(function(){
             top.layer.close(index);
             top.layer.msg("用户添加成功！");

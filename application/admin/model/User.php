@@ -15,6 +15,43 @@ class User extends Model
         //TODO:自定义的初始化
     }
 
+    public function addUser($userData)
+    {
+
+        if($userData['id']){
+            $userId = $userData['id'];
+            unset($userData['id']);
+            $ret = Db::name("user")->where("id", $userId)->update($userData);
+            if($ret){
+                return $userId;
+            }else{
+                return false;
+            }
+        }
+
+        $uname = $userData['uname'];
+        if(empty($uname)){
+            return false;
+        }
+        $find = Db::name("user")->where('uname', $uname)->find();
+        if($find){
+            return false;
+        }
+        $ret = Db::name("user")->insert($userData);
+        if($ret){
+            return Db::name("user")->getLastInsID();
+        }else{
+            return false;
+        }
+    }
+
+    public function delUser($userId)
+    {
+        if(empty($userId)){
+            return false;
+        }
+        return Db::name("user")->where('id', $userId)->delete();
+    }
     public function getUserInfo($userId)
     {
         $list = Db::name("user")->where('id', $userId)->find();
@@ -67,7 +104,14 @@ class User extends Model
 
     public function getUserList()
     {
-        $list = Db::name("user")->where(['is_delete'=>0])->select();
+        $list = Db::name("user")->alias("u")
+            ->join('tp_role r','u.role_id = r.id', 'left')
+            ->field("u.*, r.name as role_name")
+            ->select();
+        foreach ($list as $key=>$val){
+            unset($list['upass']);
+            unset($list['salt']);
+        }
         return $list;
     }
 

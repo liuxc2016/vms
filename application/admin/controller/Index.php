@@ -1,9 +1,9 @@
 <?php
 namespace app\admin\controller;
 
-use think\Db;
 use think\Session;
 use app\admin\model\User;
+use think\Config;
 class Index extends AdminBaseController
 {
 
@@ -61,6 +61,40 @@ class Index extends AdminBaseController
         Session::set("userInfo", null);
         Session::set("userInfo", null);
         $this->redirect("/admin/index/login");
+
+    }
+
+    //文件上传
+    public function upload()
+    {
+
+        $file = request()->file("file");
+        if(empty($file)){
+            return json([
+                'code'=>'0',
+                'msg'=>"请选择上传文件",
+                'data'=>['src'=>''],
+
+            ]);
+        }
+        $info = $file->move(ROOT_PATH . 'public' . DS . 'uploads');
+        if($info){
+            $file_path = Config::get("file_url")."/public/uploads/".date("Ymd")."/".$info->getFilename();
+            return json([
+                'code'=>'0',
+                'msg'=>'上传成功',
+                'data'=>['src'=>$file_path],
+
+            ]);
+        }else{
+            $err = $file->getError();
+            return json([
+                'code'=>'0',
+                'msg'=>$err,
+                'data'=>['src'=>''],
+
+            ]);
+        }
 
     }
 }

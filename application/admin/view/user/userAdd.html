@@ -8,52 +8,60 @@
     <div class="layui-form-item layui-row layui-col-xs12">
         <label class="layui-form-label">登录名</label>
         <div class="layui-input-block">
-            <input type="text" class="layui-input userName" lay-verify="required" placeholder="请输入登录名">
+            <input type="hidden" class="layui-input id">
+            <input type="text" class="layui-input uname" lay-verify="required" placeholder="请输入登录名" {eq name="is_edit" value="1"}readonly{/eq} >
         </div>
     </div>
     <div class="layui-form-item layui-row layui-col-xs12">
-        <label class="layui-form-label">邮箱</label>
+        <label class="layui-form-label">呢称</label>
         <div class="layui-input-block">
-            <input type="text" class="layui-input userEmail" lay-verify="email" placeholder="请输入邮箱">
+            <input type="text" class="layui-input nickname" placeholder="请输入呢称">
+        </div>
+    </div>
+    <div class="layui-form-item layui-row layui-col-xs12">
+        <label class="layui-form-label">密码</label>
+        <div class="layui-input-block">
+            <input type="text" class="layui-input upass" lay-verify="required" placeholder="请输入邮箱">
         </div>
     </div>
     <div class="layui-row">
         <div class="magb15 layui-col-md4 layui-col-xs12">
-            <label class="layui-form-label">性别</label>
-            <div class="layui-input-block userSex">
-                <input type="radio" name="sex" value="男" title="男" checked>
-                <input type="radio" name="sex" value="女" title="女">
-                <input type="radio" name="sex" value="保密" title="保密">
-            </div>
-        </div>
-        <div class="magb15 layui-col-md4 layui-col-xs12">
             <label class="layui-form-label">用户组别</label>
             <div class="layui-input-block">
-                <select name="userGrade" class="userRole" lay-filter="userRole">
+                <select name="userRole" class="userRole" lay-filter="userRole">
                     <option value="1">超级用户</option>
                     <option value="2">普通管理员</option>
                 </select>
             </div>
         </div>
         <div class="magb15 layui-col-md4 layui-col-xs12">
-            <label class="layui-form-label">会员状态</label>
+            <label class="layui-form-label">状态</label>
             <div class="layui-input-block">
                 <select name="userStatus" class="userStatus" lay-filter="userStatus">
-                    <option value="0">正常使用</option>
-                    <option value="1">限制用户</option>
+                    <option value="0">正常</option>
+                    <option value="1">删除</option>
+                    <option value="2">禁用</option>
                 </select>
             </div>
         </div>
     </div>
     <div class="layui-form-item layui-row layui-col-xs12">
-        <label class="layui-form-label">用户简介</label>
+        <label class="layui-form-label">头像</label>
         <div class="layui-input-block">
-            <textarea placeholder="请输入用户简介" class="layui-textarea userDesc"></textarea>
+            <button type="button" class="layui-btn" id="upimg1">
+                <i class="layui-icon">&#xe67c;</i>上传图片
+            </button>
+            <div class="layui-upload-list">
+                <img class="layui-upload-img" id="head_img_preview">
+                <p id="demoText"></p>
+            </div>
+
+            <input type="hidden" name="head_img" id="head_img">
         </div>
     </div>
     <div class="layui-form-item layui-row layui-col-xs12">
         <div class="layui-input-block">
-            <button class="layui-btn layui-btn-sm" lay-submit="" lay-filter="addUser">立即添加</button>
+            <button class="layui-btn layui-btn-sm" lay-submit="" lay-filter="addUser">{eq name="is_edit" value="1"}保存{else/}添加{/eq}</button>
             <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary">取消</button>
         </div>
     </div>
@@ -61,6 +69,82 @@
 
 
 {include file="common/footer" /}
-<script type="text/javascript" src="/static/userAdd.js"></script>
+<script>
+    layui.use(['form','layer', 'upload'],function(){
+        var form = layui.form
+        layer = parent.layer === undefined ? layui.layer : top.layer,
+                $ = layui.jquery;
+        var upload = layui.upload;
+
+        //执行实例
+        var uploadInst = upload.render({
+            elem: '#upimg1' //绑定元素
+            ,url: '/admin/index/upload' //上传接口
+            ,auto: true
+            ,accept:'images'
+            ,drag:true
+            ,choose: function(obj){
+                obj.preview(function(index, file, result){
+                    //对上传失败的单个文件重新上传，一般在某个事件中使用
+                    //obj.upload(index, file);
+                    //$('#head_img_preview').attr('src', result); //图片链接（base64）
+                });
+            }
+            ,done: function(res, index, upload){
+                $("#head_img").val(res.data.src);
+                $('#head_img_preview').attr('src', res.data.src);
+                console.log(res.data.src);
+            }
+            ,error: function(){
+                //请求异常回调
+            }
+        });
+
+        form.on("submit(addUser)",function(data){
+            console.log(data)
+            //弹出loading
+            var index = top.layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
+            var post_data = {
+                id : $(".id").val(),  //登录名
+                uname : $(".uname").val(),  //登录名
+                upass : $(".upass").val(),  //密码
+                nickname : $(".nickname").val(),  //密码
+                is_delete : data.field.userStatus,    //用户状态
+                role_id   : data.field.userRole,
+                head_img  : $("#head_img").val()
+            };
+            // 实际使用时的提交信息
+             $.post("/admin/user/userAdd",post_data,function(res){
+                 console.log(res)
+                if(res.status == 1){
+                    top.layer.alert(res.msg);
+                }else{
+                    top.layer.close(index);
+                    top.layer.msg("用户添加成功！");
+                    layer.closeAll("iframe");
+                    setTimeout(function(){
+                        //刷新父页面
+                        parent.location.reload();
+                    },2000);
+                }
+             });
+
+            return false;
+        });
+
+        //格式化时间
+        function filterTime(val){
+            if(val < 10){
+                return "0" + val;
+            }else{
+                return val;
+            }
+        }
+        //定时发布
+        var time = new Date();
+        var submitTime = time.getFullYear()+'-'+filterTime(time.getMonth()+1)+'-'+filterTime(time.getDate())+' '+filterTime(time.getHours())+':'+filterTime(time.getMinutes())+':'+filterTime(time.getSeconds());
+
+    })
+</script>
 </body>
 </html>

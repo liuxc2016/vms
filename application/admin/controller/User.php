@@ -1,9 +1,7 @@
 <?php
 namespace app\admin\controller;
-
-use app\admin\model\User as UserModel;
-use think\Db;
 use think\Request;
+use app\admin\model\User as UserModel;
 class User extends AdminBaseController
 {
 
@@ -15,7 +13,6 @@ class User extends AdminBaseController
 
     public function test()
     {
-        $this->initUser();
         dump($this->userInfo);
         dump($this->permList);
         die;
@@ -25,9 +22,8 @@ class User extends AdminBaseController
      */
     public function index()
     {
-        $this->initUser();
         $top_menus = $this->getTopMenu();
-        return $this->fetch('user/index', ['top_menus'=>$top_menus]);
+        return $this->fetch('user/user', ['top_menus'=>$top_menus]);
     }
 
     public function role(){
@@ -40,7 +36,6 @@ class User extends AdminBaseController
     }
 
     public function getMenuJson(){
-        $this->initUser();
         $main_menu = $this->getMenuTree();
         return json(['main_menu'=>$main_menu]);
     }
@@ -48,7 +43,75 @@ class User extends AdminBaseController
 
     public function userAdd()
     {
-        return $this->fetch('user/userAdd');
+        if(request()->isPost()){
+            $parmas = request()->param();
+
+            if(empty($parmas['uname'])){
+                return json([
+                    'status'=>1,
+                    'msg'=>'fail:提交参数不全！',
+                    'insert_id'=>''
+                ]);
+            }
+            $data = [
+                'id'=>$parmas['id'],
+                'uname'=>$parmas['uname'],
+                'upass'=>$parmas['upass'],
+                'nickname'=>empty($parmas['nickname'])?$parmas['uname']:$parmas['nickname'],
+                'is_delete'=>$parmas['is_delete'],
+                'role_id'=>$parmas['role_id'],
+                'head_img'=>$parmas['head_img'],
+            ];
+            $user = new UserModel();
+            $ret = $user->addUser($data);
+            if($ret){
+                return json([
+                    'status'=>0,
+                    'msg'=>'ok',
+                    'insert_id'=>$ret
+                ]);
+            }else{
+                return json([
+                    'status'=>1,
+                    'msg'=>'fail:'.$user->getError(),
+                    'insert_id'=>$ret
+                ]);
+            }
+
+        }else{
+            return $this->fetch('user/userAdd', ['is_edit'=>0]);
+        }
+    }
+
+    public function userEdit()
+    {
+        return $this->fetch('user/userAdd', ['is_edit'=>1]);
+    }
+
+
+    public function del()
+    {
+        if(request()->isPost()){
+            $parmas = request()->param();
+            $id = $parmas['id'];
+
+            $user = new UserModel();
+            $ret = $user->delUser($id);
+            if($ret){
+                return json([
+                    'status'=>0,
+                    'msg'=>'ok',
+                ]);
+            }else{
+                return json([
+                    'status'=>1,
+                    'msg'=>'fail:'.$user->getError(),
+                ]);
+            }
+
+        }else{
+            return '';
+        }
     }
 
 

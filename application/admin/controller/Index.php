@@ -1,9 +1,8 @@
 <?php
 namespace app\admin\controller;
 
-use app\admin\model\User;
 use think\Db;
-
+use think\Session;
 class Index extends AdminBaseController
 {
 
@@ -18,9 +17,17 @@ class Index extends AdminBaseController
      */
     public function index()
     {
-        //$users = new User();
-        //$userList = $users->getUserList();
-        $top_menus = Db::name("perm")->where(['is_delete'=>0, 'pid'=>0])->select();
+        $this->initUser();
+        $top_menus = [];
+        foreach ($this->permList as $key=> $val){
+            if($val['pid'] == 0){
+                $top_menus[] = $val;
+            }
+        }
         return $this->fetch('index/index', ['top_menus'=>$top_menus]);
+    }
+
+    public function logout(){
+
     }
 }

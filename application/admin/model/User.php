@@ -15,6 +15,12 @@ class User extends Model
         //TODO:自定义的初始化
     }
 
+    public function getUserInfo($userId)
+    {
+        $list = Db::name("user")->where('id', $userId)->find();
+        return $list;
+    }
+
     public function getPerm($perm_id)
     {
         $list = Db::name("perm")->where('id', $perm_id)->find();

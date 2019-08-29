@@ -9,16 +9,24 @@ class User extends AdminBaseController
 
     public function main()
     {
-        echo 'admin_index';
+        echo '';
         exit(0);
     }
 
+    public function test()
+    {
+        $this->initUser();
+        dump($this->userInfo);
+        dump($this->permList);
+        die;
+    }
     /**
      * @return array
      */
     public function index()
     {
-        $top_menus = Db::name("perm")->where(['is_delete'=>0, 'pid'=>0])->select();
+        $this->initUser();
+        $top_menus = $this->getTopMenu();
         return $this->fetch('user/index', ['top_menus'=>$top_menus]);
     }
 
@@ -32,30 +40,11 @@ class User extends AdminBaseController
     }
 
     public function getMenuJson(){
-        $top_menus = Db::name("perm")->where(['is_delete'=>0, 'pid'=>0])->select();
-        $ret = [];
-        foreach ($top_menus as $top_menu){
-            $ret[$top_menu['name']] = $this->getChild($top_menu['id']);
-        }
-        return json(['main_menu'=>$ret]);
+        $this->initUser();
+        $main_menu = $this->getMenuTree();
+        return json(['main_menu'=>$main_menu]);
     }
 
-    private function getChild($pid){
-        $d = Db::name("perm")->where(['is_delete'=>0, 'pid'=>$pid])->select();
-        $ret = [];
-        foreach ($d as $v){
-            $m['title'] = $v['title'];
-            $m['icon'] = $v['icon'];
-            $m['href'] = $v['link'];
-            $m['spread'] = false;
-            $m['target'] = "";
-            if($v['level'] < 3 ){
-                $m['children'] = $this->getChild($v['id']);
-            }
-            $ret[] = $m;
-        }
-        return $ret;
-    }
 
     public function userAdd()
     {

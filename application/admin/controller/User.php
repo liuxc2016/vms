@@ -36,7 +36,8 @@ class User extends AdminBaseController
 
 
     public function roleperm(){
-        return $this->fetch("user/roleperm");
+        $roleId = request()->get('role_id');
+        return $this->fetch("user/roleperm",['role_id'=>$roleId]);
 
     }
 
@@ -54,6 +55,19 @@ class User extends AdminBaseController
             $permInfo = $userModel->getPerm($permId);
             return $this->fetch("user/editPerm", ['perm_info'=>$permInfo]);
         }
+    }
+
+    public function editRolePerm()
+    {
+
+        $params = request()->param();
+        $roleId = $params['role_id'];
+        $permIds = json_decode($params['perm_ids'], true);
+        $userModel = new UserModel();
+        $ret = $userModel->saveRolePerm($roleId, $permIds);
+
+        return json(['msg'=>'ok', 'ret'=>$ret]);
+
     }
 
     public function addPerm(Request $request)
@@ -87,7 +101,23 @@ class User extends AdminBaseController
             'data'=>$permList
         ];
         return json($data, 200);
+    }
 
+    public function getRolePermList()
+    {
+        $roleId = request()->get('role_id');
+        $userModel = new UserModel();
+        //$permList = $userModel->getPermList();
+        $rolePerms = $userModel->getRolePermList($roleId);
+        $data = [
+            'code'=>0,
+            'msg'=>'',
+            'count'=>count($rolePerms),
+            "is"=> true,
+            "tip"=>"操作成功！",
+            'data'=>$rolePerms
+        ];
+        return json($data, 200);
     }
 
     public function getUserList()

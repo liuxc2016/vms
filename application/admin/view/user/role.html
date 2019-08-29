@@ -64,10 +64,12 @@
 			if(layEvent === 'edit'){ //编辑
 				//do somehing
 			} else if(layEvent === 'edit_perm'){ //编辑权限
+				var surl = '/admin/user/roleperm?role_id='+ data.id;
+				alert(surl)
 				layer.open({
 					type: 2
 					,title: '编辑权限'
-					,content: 'roleperm.html'
+					,content: '/admin/user/roleperm?role_id='+ data.id
 					,area: ['420px', '420px']
 					,btn: ['确定', '取消']
 					,yes: function(index, layero){

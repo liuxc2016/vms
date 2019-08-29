@@ -2,107 +2,185 @@
 <html>
 <head>
     {include file="common/header" /}
-</head>
-<body class="childrenBody">
-<div class="layui-row">
-    <form class="layui-form">
-        <blockquote class="layui-elem-quote quoteBox">
-            <div class="layui-inline">
-                <div class="layui-input-inline">
-                    <input type="text" class="layui-input searchVal" placeholder="请输入搜索的内容">
-                </div>
-                <a class="layui-btn search_btn" data-type="reload">搜索</a>
-            </div>
-            <div class="layui-inline">
-                <a class="layui-btn layui-btn-normal addNews_btn">添加用户</a>
-            </div>
-            <div class="layui-inline">
-                <a class="layui-btn layui-btn-danger layui-btn-normal delAll_btn">批量删除</a>
-            </div>
-        </blockquote>
-    </form>
-    <table id="role-list" lay-filter="role-list"></table>
-</div>
-{include file="common/footer" /}
-</body>
 
-<script type="text/html" id="roletoolbar">
-    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
-    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="edit_perm">编辑权限</a>
-    <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="del">删除</a>
-</script>
+</head>
+<style>
+    html, body {
+        height: 100%;
+        margin:0;padding:0;
+        font-size: 12px;
+    }
+    div{
+        -moz-box-sizing: border-box;  /*Firefox3.5+*/
+        -webkit-box-sizing: border-box; /*Safari3.2+*/
+        -o-box-sizing: border-box; /*Opera9.6*/
+        -ms-box-sizing: border-box; /*IE8*/
+        box-sizing: border-box; /*W3C标准(IE9+，Safari5.1+,Chrome10.0+,Opera10.6+都符合box-sizing的w3c标准语法)*/
+    }
+
+    .dBody {
+        width:100%;
+        overflow:auto;
+        top:90px;
+        position:absolute;
+        z-index:10;
+        bottom:5px;
+    }
+</style>
+<body>
+<div style="height: 100%">
+    <blockquote class="layui-elem-quote quoteBox">
+        <div class="">
+            <p>编辑权限</p>
+        </div>
+    </blockquote>
+    <table class="layui-hidden" id="treeTable" lay-filter="treeTable"></table>
+    <div class="magt10 layui-right" style="margin-right: 20px;">
+        <div class="layui-input-block">
+            <button class="layui-btn" lay-submit="" lay-filter="saveRolePerm" onclick="getCheckData()">保存</button>
+            <button type="reset" class="layui-btn layui-btn-primary" onclick="reload()">重置</button>
+        </div>
+    </div>
+</div>
+
+{include file="common/footer" /}
 
 <script>
-  var main_url = WEB_ROOT;
-
-  layui.use('table', function(){
-    var element = layui.element;
-    var $ = layui.jquery;
-    var table = layui.table;
-    var layer = top.layer!="undefined"?top.layer:layui.layer;
-
-    //第一个实例
-    table.render({
-      elem: '#role-list'
-      ,url: main_url + "/admin/user/getRoleList" //数据接口
-      ,method:"post"
-      ,toolbar:"default"
-      ,height:"full-50"
-      ,page: false //开启分页
-      ,cols: [[ //表头
-        {field: 'id', title: 'ID', width:"10%", sort: true, fixed: 'left'}
-        ,{field: 'name', title: '角色名', width: "20%", sort: true}
-        ,{field: 'memo', title: '描述', width: "30%", sort: true}
-        ,{field: '', title: '操作', width: "40%", toolbar: '#roletoolbar', align:'center' }
+  var editObj=null,ptable=null,treeGrid=null,tableId='treeTable',layer=null;
+  layui.config({
+    base : "/static/js/"
+  }).extend({
+    "treeGrid" : "treeGrid"
+  });
+  var role_id = "{$role_id}";
+  layui.use(['jquery','treeGrid','layer'], function(){
+    var $=layui.jquery;
+    treeGrid = layui.treeGrid;//很重要
+    layer=layui.layer;
+    //treeGrid =  $.extend(treeGrid, {config: {checkName: 'checked'}});
+    ptable=treeGrid.render({
+      id:tableId
+      ,elem: '#'+tableId
+      ,idField:'id'
+      ,url:'/admin/user/getRolePermList?role_id=' + role_id
+      ,method:'get'
+      ,cellMinWidth: 100
+      ,height:"full-150"
+      ,treeId:'id'//树形id字段名称
+      ,treeUpId:'pid'//树形父id字段名称
+      ,treeShowName:'name'//以树形式显示的字段
+      ,cols: [[
+        {type:'checkbox',sort:true},
+        {field:'id',width:100, title: '权限id'}
+        ,{field:'name', edit:'text',width:350, title: '权限名称'}
       ]]
+      ,page:false
     });
 
-    table.on('tool(role-list)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
-      var data = obj.data;
-      var layEvent = obj.event;
-      var tr = obj.tr;
-      if(layEvent === 'edit'){ //编辑
-        //do somehing
-      } else if(layEvent === 'edit_perm'){ //编辑权限
+    treeGrid.on('tool('+tableId+')',function (obj) {
+      if(obj.event === 'del') {
+        //a = 1;
+        del(obj);
+      }else if(obj.event ==="add_sub"){
+        console.log(obj)
+        add_sub(obj);
+      }else if(obj.event ==="edit"){
+        id = obj.data.id;
         layer.open({
           type: 2
           ,title: '编辑权限'
-          ,content: 'roleperm.html'
-          ,area: ['420px', '420px']
-          ,btn: ['确定', '取消']
-          ,yes: function(index, layero){
-            var iframeWindow = window['layui-layer-iframe'+ index]
-              ,submitID = 'LAY-user-back-submit'
-              ,submit = layero.find('iframe').contents().find('#'+ submitID);
-
-            //监听提交
-            iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
-              var field = data.field; //获取提交的字段
-
-              //提交 Ajax 成功后，静态更新表格中的数据
-              //$.ajax({});
-              table.reload('LAY-user-front-submit'); //数据刷新
-              layer.close(index); //关闭弹层
-            });
-
-            submit.trigger('click');
-          }
-        });
-      } else if(layEvent === 'del'){ //删除
-        layer.confirm('真的删除行么', function(index){
-          obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
-          del_role(data.id);
-          layer.close(index);
-          //向服务端发送删除指令
+          ,content: 'editperm?perm_id='+id
+          ,area: ['400px', '500px']
         });
       }
     });
 
+    function del(obj) {
+      layer.confirm("你确定删除数据吗？如果存在下级节点则一并删除，此操作不能撤销！", {icon: 3, title:'提示'},
+        function(index){
+          del_perm(obj.data.id, index, tableId);
+          layer.close(index);
+        },function (index) {
+          layer.close(index);
+        }
+      );
+    }
+
+    function del_perm(perm_id, index, tableId){
+      var _that = this;
+      _that.index = index;
+      $.ajax("/admin/user/delPerm?perm_id="+perm_id, function(){
+        console.log(tableId);
+        treeGrid.reload(tableId,{
+          page:{
+            curr:1
+          }
+        });
+        layer.close(_that.index);
+      });
+
+    }
+
+    var i = Math.ceil(Math.random()*100);
+    //添加
+    function add_sub(pObj) {
+      var pdata=pObj?pObj.data:null;
+      var param={};
+      var newI = ++i;
+      param.name=pdata.name+"_子_"+ String(newI);
+      param.level = pdata.level + 1;
+      param.pid=pdata?pdata.id:null;
+
+      $.post("/admin/user/addPerm",{"perm":param}, function(data){
+        console.log(data);
+        param.id = data.perm_id;
+        treeGrid.addRow(tableId,pdata?pdata[treeGrid.config.indexName]+1:0,param);
+      });
+    }
   });
 
-  function del_role(role_id){
-    alert(role_id)
+  function openorclose() {
+    var map=treeGrid.getDataMap(tableId);
+    var o= map['102'];
+    treeGrid.treeNodeOpen(tableId,o,!o[treeGrid.config.cols.isOpen]);
+  }
+
+  function getCheckData() {
+    var checkStatus = treeGrid.checkStatus(tableId)
+      ,data = checkStatus.data;
+    console.log(data)
+    var perm_ids = [];
+    data.forEach(function(e,i,array){
+      //array：当前数组，i：当前索引，e：当前元素
+      perm_ids.push(e.id)
+    });
+    var post_data = {
+      role_id : role_id,
+      perm_ids: JSON.stringify(perm_ids)
+    };
+    console.log(post_data);
+    $.post("/admin/user/editRolePerm", post_data, function(data){
+      console.log(tableId, data);
+      reload();
+    });
+
+  }
+  function reload() {
+    treeGrid.reload(tableId,{
+      page:{
+        curr:1
+      }
+    });
+  }
+  function query() {
+    treeGrid.query(tableId,{
+      where:{
+        name:'sdfsdfsdf'
+      }
+    });
   }
 
 </script>
+
+</body>
 </html>

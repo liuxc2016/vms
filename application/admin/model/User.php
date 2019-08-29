@@ -63,4 +63,39 @@ class User extends Model
         $list = Db::name("perm")->where(['is_delete'=>0])->select();
         return $list;
     }
+
+    public function getRolePermList($roleId)
+    {
+        $list = Db::name("perm")->where(['is_delete'=>0])->select();
+
+        $rolePerms = Db::name("role_perm")->where(['role_id'=>$roleId])->column('perm_id');
+        foreach ($list as $key => $val){
+            if(in_array($val['id'], $rolePerms)){
+                $list[$key]['checked'] = true;
+                $list[$key]['lay_is_checked'] = true;
+            }else{
+                $list[$key]['checked'] = false;
+                $list[$key]['lay_is_checked'] = false;
+            }
+        }
+        return $list;
+    }
+    public function saveRolePerm($roleId, $permIds)
+    {
+        $rolePerms = Db::name("role_perm")->where(['role_id'=>$roleId])->column('perm_id');
+        $need_sub = array_diff($rolePerms, $permIds);
+        $need_add = array_diff($permIds, $rolePerms);
+        if(!empty($need_sub)){
+            Db::name("role_perm")->where("role_id = $roleId")->where('perm_id','in',$need_sub)->delete();
+        }
+        foreach ($need_add as $perm_id){
+            $data = [
+              "role_id"=>$roleId,
+              "perm_id"=>$perm_id,
+            ];
+            Db::name("role_perm")->insert($data);
+        }
+        return true;
+    }
+
 }

@@ -64,31 +64,29 @@
 			if(layEvent === 'edit'){ //编辑
 				//do somehing
 			} else if(layEvent === 'edit_perm'){ //编辑权限
-				var surl = '/admin/user/roleperm?role_id='+ data.id;
-				alert(surl)
 				layer.open({
 					type: 2
 					,title: '编辑权限'
 					,content: '/admin/user/roleperm?role_id='+ data.id
-					,area: ['420px', '420px']
-					,btn: ['确定', '取消']
-					,yes: function(index, layero){
-						var iframeWindow = window['layui-layer-iframe'+ index]
-								,submitID = 'LAY-user-back-submit'
-								,submit = layero.find('iframe').contents().find('#'+ submitID);
-
-						//监听提交
-						iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
-							var field = data.field; //获取提交的字段
-
-							//提交 Ajax 成功后，静态更新表格中的数据
-							//$.ajax({});
-							table.reload('LAY-user-front-submit'); //数据刷新
-							layer.close(index); //关闭弹层
-						});
-
-						submit.trigger('click');
-					}
+					,area: ['600px;', '80%']
+					// ,btn: ['确定', '取消']
+					// ,yes: function(index, layero){
+					// 	var iframeWindow = window['layui-layer-iframe'+ index]
+					// 			,submitID = 'LAY-user-back-submit'
+					// 			,submit = layero.find('iframe').contents().find('#'+ submitID);
+					//
+					// 	//监听提交
+					// 	iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
+					// 		var field = data.field; //获取提交的字段
+					//
+					// 		//提交 Ajax 成功后，静态更新表格中的数据
+					// 		//$.ajax({});
+					// 		table.reload('LAY-user-front-submit'); //数据刷新
+					// 		layer.close(index); //关闭弹层
+					// 	});
+					//
+					// 	submit.trigger('click');
+					// }
 				});
 			} else if(layEvent === 'del'){ //删除
 				layer.confirm('真的删除行么', function(index){

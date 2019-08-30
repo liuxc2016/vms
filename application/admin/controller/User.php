@@ -62,6 +62,9 @@ class User extends AdminBaseController
                 'role_id'=>$parmas['role_id'],
                 'head_img'=>$parmas['head_img'],
             ];
+            if(!empty($data['id'])){
+                unset($data['uname']);
+            }
             $user = new UserModel();
             $ret = $user->addUser($data);
             if($ret){

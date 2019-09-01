@@ -29,7 +29,7 @@
     <div class="layui-form-item layui-row layui-col-xs12">
         <div class="layui-input-block">
             <button class="layui-btn layui-btn-info" lay-submit="" lay-filter="editPerm">保  存</button>
-            <button type="reset" class="layui-btn layui-btn-danger">取  消</button>
+            <button type="button" class="layui-btn layui-btn-danger cancelEdit" lay-filter="cancelEdit">取  消</button>
         </div>
     </div>
 </form>
@@ -44,7 +44,7 @@
 
         form.on("submit(editPerm)",function(data){
             //弹出loading
-            var index = top.layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
+            this_index = top.layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
             var postData = {
                 id   : $("#id").val(),
                 name : $("#name").val(),  //权限名
@@ -56,7 +56,7 @@
                  console.log(res);
              });
             setTimeout(function(){
-                top.layer.close(index);
+                top.layer.close(this_index);
                 top.layer.msg("权限编辑成功！");
                 layer.closeAll("iframe");
                 //刷新父页面
@@ -65,17 +65,11 @@
             return false;
         });
 
-        //格式化时间
-        function filterTime(val){
-            if(val < 10){
-                return "0" + val;
-            }else{
-                return val;
-            }
-        }
-        //定时发布
-        var time = new Date();
-        var submitTime = time.getFullYear()+'-'+filterTime(time.getMonth()+1)+'-'+filterTime(time.getDate())+' '+filterTime(time.getHours())+':'+filterTime(time.getMinutes())+':'+filterTime(time.getSeconds());
+
+        $(".cancelEdit").on("click", function(){
+            frame_index = parent.layer.getFrameIndex(window.name)
+            top.layui.layer.close(frame_index);
+        })
 
     })
 </script>

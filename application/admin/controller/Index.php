@@ -36,13 +36,13 @@ class Index extends AdminBaseController
             $upass = empty($params['upass'])?'':$params['upass'];
             $ucode = empty($params['ucode'])?'':$params['ucode'];
             if(empty($uname) or empty($upass)){
-                return json(['status'=>0, 'info'=>'登陆失败1！']);
+                return json(['status'=>0, 'info'=>'登陆失败,请输入用户名或密码！']);
             }
 
             $user = new User();
             $userInfo = $user->login($uname, $upass);
             if(!$userInfo){
-                return json(['status'=>0, 'info'=>'登陆失败2！'.$uname.$upass]);
+                return json(['status'=>0, 'info'=>'登陆失败,用户名密码错误！']);
             }else{
                 $user->saveLoginRecord($userInfo, $this->request->ip());
 

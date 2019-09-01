@@ -138,10 +138,16 @@
                         body.find(".uname").val(edit.uname);  //登录名
                         body.find(".upass").val(edit.upass);  //邮箱
                         body.find(".nickname").val(edit.nickname);  //邮箱
+<<<<<<< HEAD
                         body.find(".is_delete").val(edit.is_delete);    //用户状态
                         body.find(".role_id").val(edit.role_id);    //用户状态
                         body.find("#head_img").val(edit.head_img);    //用户头像
                         body.find("#head_img_preview").attr("src", edit.head_img);    //用户头像
+=======
+                        body.find(".userStatus").val(edit.userStatus);    //用户状态
+                        body.find(".userRole").val(edit.userRole);    //用户状态
+                        body.find("#head_img").attr("src", edit.head_img);    //用户状态
+>>>>>>> 63060d519741af6fbeeeeacb15059b4f2ec59b71
                         form.render();
                     }
                     setTimeout(function(){

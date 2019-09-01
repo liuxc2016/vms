@@ -42,7 +42,7 @@ class User extends AdminBaseController
     }
 
 
-    public function userAdd()
+    public function saveUser()
     {
         if(request()->isPost()){
             $parmas = request()->param();
@@ -71,7 +71,7 @@ class User extends AdminBaseController
                 unset($data['uname']);
             }
             $user = new UserModel();
-            $ret = $user->addUser($data);
+            $ret = $user->saveUser($data);
             if($ret){
                 return json([
                     'status'=>0,
@@ -87,7 +87,8 @@ class User extends AdminBaseController
             }
 
         }else{
-            return $this->fetch('user/userAdd', ['is_edit'=>0]);
+            $is_edit = $this->request->get("is_edit/d");
+            return $this->fetch('user/saveUser', ['is_edit'=>$is_edit]);
         }
     }
 

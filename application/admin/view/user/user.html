@@ -88,13 +88,12 @@
             var layEvent = obj.event;
             //var tr = obj.tr;
             if(layEvent === 'edit'){ //编辑
-                addUser(data)
+                saveUser(data)
             }  else if(layEvent === 'del'){ //删除
                 layer.confirm('真的删除行么', function(index){
                     obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
                     $.post("/admin/user/del",{id:obj.data.id},function(res){
                         if(res.status == 1){
-                            top.layer.alert(res.msg);
                             table.reload('user-list')
                         }else{
                             top.layer.close(index);
@@ -126,11 +125,14 @@
         });
 
         //添加用户
-        function addUser(edit){
+        function saveUser(edit){
+            var is_edit = edit?1:0;
+
             var index = layui.layer.open({
                 title : "添加用户",
                 type : 2,
-                content : edit ? "userEdit":"userAdd",
+                maxmin:true,
+                content : "saveUser?is_edit=" + is_edit,
                 success : function(layero, index){
                     var body = layui.layer.getChildFrame('body', index);
                     if(edit){
@@ -151,21 +153,19 @@
                     },500)
                 }
             });
-            layui.layer.full(index);
+            //layui.layer.full(index);
             window.sessionStorage.setItem("index",index);
             //改变窗口大小时，重置弹窗的宽高，防止超出可视区域（如F12调出debug的操作）
             $(window).on("resize",function(){
                 var idx = window.sessionStorage.getItem("index");
                 var body = layui.layer.getChildFrame('body', idx);
-                console.log(idx)
                 if (body.html() != undefined){
-                    //layer.full(idx);
-                    layui.layer.full(idx)
+                    //layui.layer.full(idx)
                 }
             })
         }
         $(".addNews_btn").click(function(){
-            addUser();
+            saveUser();
         })
 
     });

@@ -22,7 +22,8 @@ class User extends Model
         return date("Y-m-d H:i:s");
     }
 
-    public function addUser($userData)
+    /*添加--保存用户*/
+    public function saveUser($userData)
     {
 
         if($userData['id']){

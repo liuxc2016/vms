@@ -13,7 +13,8 @@ return [
     // 数据库类型
     'type'            => 'mysql',
     // 服务器地址
-    'hostname'        => 'bt.xmf5.com',
+    //'hostname'        => 'bt.xmf5.com',
+    'hostname'        => 'localhost',
     // 数据库名
     'database'        => 'tp50',
     // 用户名

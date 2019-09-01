@@ -14,7 +14,7 @@
 					<a class="layui-btn search_btn" data-type="reload">搜索</a>
 				</div>
 				<div class="layui-inline">
-					<a class="layui-btn layui-btn-normal addNews_btn">添加用户</a>
+					<a class="layui-btn layui-btn-normal add_btn">添加角色</a>
 				</div>
 				<div class="layui-inline">
 					<a class="layui-btn layui-btn-danger layui-btn-normal delAll_btn">批量删除</a>
@@ -26,7 +26,7 @@
 	{include file="common/footer" /}
 </body>
 
-<script type="text/html" id="roletoolbar">
+<script type="text/html" id="row_toolbar">
 	<a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
 	<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="edit_perm">编辑权限</a>
 	<a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="del">删除</a>
@@ -35,10 +35,11 @@
 <script>
 	var main_url = WEB_ROOT;
 
-	layui.use('table', function(){
+	layui.use(['table', 'form', 'element', 'jquery', 'layer'], function(){
 		var element = layui.element;
 		var $ = layui.jquery;
 		var table = layui.table;
+		var form = layui.form;
 		var layer = top.layer!="undefined"?top.layer:layui.layer;
 
 		//第一个实例
@@ -46,14 +47,28 @@
 			elem: '#role-list'
 			,url: main_url + "/admin/user/getRoleList" //数据接口
 			,method:"post"
-			,toolbar:"default"
+			,toolbar:false
 			,height:"full-50"
-			,page: false //开启分页
+			,page: true //开启分页
+			,limits:[5, 10, 20, 50, 100]
+			,loading: true //开启加载进度
 			,cols: [[ //表头
-				{field: 'id', title: 'ID', width:"10%", sort: true, fixed: 'left'}
+				{field: '', type:"checkbox", title: 'ID', width:"10%", sort: true, fixed: 'left'}
+				,{field: 'id', title: 'ID', width:"10%", sort: true, fixed: 'left'}
 				,{field: 'name', title: '角色名', width: "20%", sort: true}
 				,{field: 'memo', title: '描述', width: "30%", sort: true}
-				,{field: '', title: '操作', width: "40%", toolbar: '#roletoolbar', align:'center' }
+				,{field: 'is_delete', title: '状态', width: "10%", align:"center", templet:function(d){
+					if(d.is_delete == 0){
+						return "<a class='layui-btn layui-btn-xs layui-btn-green'>正常</a>"
+					}else if(d.is_delete == 1){
+						return "<a class='layui-btn layui-btn-info layui-btn-xs'>已删除</a>"
+					}else if(d.is_delete == 2){
+						return "<a class='layui-btn layui-btn-danger layui-btn-xs'>已禁用</a>"
+					}else{
+						return d.is_delete
+					}
+				}}
+				,{field: '', title: '操作', width: "40%", toolbar: '#row_toolbar', align:'center' }
 			]]
 		});
 
@@ -62,47 +77,113 @@
 			var layEvent = obj.event;
 			var tr = obj.tr;
 			if(layEvent === 'edit'){ //编辑
-				//do somehing
+				addRole(obj.data);
 			} else if(layEvent === 'edit_perm'){ //编辑权限
 				layer.open({
 					type: 2
 					,title: '编辑权限'
 					,content: '/admin/user/roleperm?role_id='+ data.id
 					,area: ['600px;', '80%']
-					// ,btn: ['确定', '取消']
-					// ,yes: function(index, layero){
-					// 	var iframeWindow = window['layui-layer-iframe'+ index]
-					// 			,submitID = 'LAY-user-back-submit'
-					// 			,submit = layero.find('iframe').contents().find('#'+ submitID);
-					//
-					// 	//监听提交
-					// 	iframeWindow.layui.form.on('submit('+ submitID +')', function(data){
-					// 		var field = data.field; //获取提交的字段
-					//
-					// 		//提交 Ajax 成功后，静态更新表格中的数据
-					// 		//$.ajax({});
-					// 		table.reload('LAY-user-front-submit'); //数据刷新
-					// 		layer.close(index); //关闭弹层
-					// 	});
-					//
-					// 	submit.trigger('click');
-					// }
 				});
 			} else if(layEvent === 'del'){ //删除
-				layer.confirm('真的删除行么', function(index){
-					obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
-					del_role(data.id);
-					layer.close(index);
-					//向服务端发送删除指令
-				});
+				del_role(data.id, obj);
 			}
 		});
 
+		//搜索【此功能需要后台配合，所以暂时没有动态效果演示】
+		$(".search_btn").on("click",function(){
+			$search_key = window.sessionStorage.getItem("admin_user_role_search_key");
+			if($(".searchVal").val() != $search_key){
+				table.reload("role-list",{
+					page: {
+						curr: 1 //重新从第 1 页开始
+					},
+					where: {
+						search_key: $(".searchVal").val()  //搜索的关键字
+					}
+				});
+				window.sessionStorage.setItem("admin_user_role_search_key", $(".searchVal").val());
+			}else{
+				//layer.alert("")
+			}
+		});
+
+		$(".add_btn").on("click",function(){
+			addRole();
+		});
+		$(".delAll_btn").on("click",function(){
+			var checkStatus = table.checkStatus('role-list'),data = checkStatus.data;
+			var role_id = [];
+			if(data.length > 0) {
+				for (var i in data) {
+					role_id.push(data[i].id);
+				}
+				del_role(role_id);
+			}else{
+				layer.msg("请选择需要删除的用户");
+			}
+		});
+
+		function addRole(edit){
+			is_edit = edit?1:0;
+			var index = layui.layer.open({
+				title : edit?"编辑角色":"添加角色",
+				type : 2,
+				content : "saveRole?is_edit="+is_edit,
+				success : function(layero, index){
+					var body = layui.layer.getChildFrame('body', index);
+					if(edit){
+						body.find("#id").val(edit.id);  //登录名
+						body.find("#name").val(edit.name);  //登录名
+						body.find(".memo").val(edit.memo);  //邮箱
+						body.find(".is_delete").val(edit.is_delete);    //用户状态
+						body.find(".pid").val(edit.pid);    //\
+						form.render();
+					}
+					setTimeout(function(){
+						layui.layer.tips('点击此处返回用户列表', '.layui-layer-setwin .layui-layer-close', {
+							tips: 3
+						});
+					},500)
+				}
+			});
+			layui.layer.full(index);
+			window.sessionStorage.setItem("index",index);
+			//改变窗口大小时，重置弹窗的宽高，防止超出可视区域（如F12调出debug的操作）
+			$(window).on("resize",function(){
+				var idx = window.sessionStorage.getItem("index");
+				var body = layui.layer.getChildFrame('body', idx);
+				console.log(idx)
+				if (body.html() != undefined){
+					//layer.full(idx);
+					layui.layer.full(idx)
+				}
+			})
+		}
+		function del_role(role_id, obj){
+			layer.confirm('确定删除选中的用户?',{icon: 3, title: '提示信息'}, function(index){
+				$.post("/admin/user/delRole",{id:role_id},function(res){
+					if(res.status == 1){
+						top.layer.alert(res.msg);
+						table.reload('role-list')
+					}else{
+						top.layer.close(index);
+						top.layer.msg("删除成功！");
+						if(obj){
+							obj.del()
+						}else{
+							table.reload('role-list')
+						}
+					}
+				});
+				layer.close(index);
+				//向服务端发送删除指令
+			});
+		}
+
 	});
 
-	function del_role(role_id){
-		alert(role_id)
-	}
+
 
 </script>
 </html>

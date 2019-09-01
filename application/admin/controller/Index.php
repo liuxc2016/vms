@@ -44,6 +44,8 @@ class Index extends AdminBaseController
             if(!$userInfo){
                 return json(['status'=>0, 'info'=>'登陆失败2！'.$uname.$upass]);
             }else{
+                $user->saveLoginRecord($userInfo, $this->request->ip());
+
                 Session::set("userInfo", $userInfo);
                 $this->userInfo = $userInfo;
                 $this->permList = $user->getRolePermList($this->userInfo['role_id']);
@@ -97,4 +99,5 @@ class Index extends AdminBaseController
         }
 
     }
+
 }

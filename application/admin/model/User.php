@@ -10,9 +10,16 @@ class User extends Model
     private $role_table = "role";
     protected function initialize()
     {
-        //需要调用`Model`的`initialize`方法
         parent::initialize();
-        //TODO:自定义的初始化
+    }
+
+    protected $insert = ["add_time", "last_login_ip"];
+    protected function setLastLoginIpAttr(){
+        return request()->ip();
+    }
+
+    protected  function setAddTimeAttr(){
+        return date("Y-m-d H:i:s");
     }
 
     public function addUser($userData)
@@ -22,7 +29,7 @@ class User extends Model
             $userId = $userData['id'];
             unset($userData['id']);
             $ret = Db::name("user")->where("id", $userId)->update($userData);
-            if($ret){
+            if($ret !== false){
                 return $userId;
             }else{
                 return false;
@@ -102,23 +109,93 @@ class User extends Model
         return $userInfo;
     }
 
-    public function getUserList()
+    public function getUserList($keyWord='', $page=1, $limit=0, $getTotal=0)
     {
-        $list = Db::name("user")->alias("u")
-            ->join('tp_role r','u.role_id = r.id', 'left')
-            ->field("u.*, r.name as role_name")
-            ->select();
-        foreach ($list as $key=>$val){
-            unset($list['upass']);
-            unset($list['salt']);
+        if($keyWord){
+            $where["u.uname|u.nickname"] = ["like", "%$keyWord%"];
+        }else{
+            $where = "1 = 1";
         }
-        return $list;
+
+        if($getTotal == 1){
+            return Db::name("user")->alias("u")
+                ->join('tp_role r','u.role_id = r.id', 'left')
+                ->where($where)->count();
+        }else{
+            $list = Db::name("user")->alias("u")
+                ->join('tp_role r','u.role_id = r.id', 'left')
+                ->where($where)
+                ->field("u.*, r.name as role_name")
+                ->limit(($page - 1)*$limit, $limit)
+                ->select();
+            foreach ($list as $key=>$val){
+                unset($list['upass']);
+                unset($list['salt']);
+            }
+            return $list;
+        }
     }
 
-    public function getRoleList(){
-        $list = Db::name("role")->where(['is_delete'=>0])->select();
-        return $list;
+    public function getRoleList($keyWord='', $page=1, $limit=0, $getTotal=0){
+        if($keyWord){
+            $where["name"] = ["like", "%$keyWord%"];
+        }else{
+            $where = "1 = 1";
+        }
+        if($getTotal == 1){
+            return Db::name("role")
+                ->where($where)->count();
+        }else{
+            $list = Db::name("role")
+                ->where($where)
+                ->limit(($page - 1)*$limit, $limit)
+                ->select();
+
+            return $list;
+        }
+
     }
+
+    /*添加--编辑角色*/
+    public function saveRole($userData)
+    {
+
+        if($userData['id']){
+            $userId = $userData['id'];
+            unset($userData['id']);
+            $ret = Db::name("role")->where("id", $userId)->update($userData);
+            if($ret !== false){
+                return $userId;
+            }else{
+                return false;
+            }
+        }
+
+        $name = $userData['name'];
+        if(empty($name)){
+            return false;
+        }
+        $find = Db::name("role")->where('name', $name)->find();
+        if($find){
+            return false;
+        }
+        $ret = Db::name("role")->insert($userData);
+        if($ret){
+            return Db::name("role")->getLastInsID();
+        }else{
+            return false;
+        }
+    }
+
+    public function delRole($roleId)
+    {
+        if(empty($roleId)){
+            return false;
+        }
+
+        return Db::name("role")->delete($roleId);
+    }
+
 
     public function getPermList()
     {
@@ -158,6 +235,13 @@ class User extends Model
             Db::name("role_perm")->insert($data);
         }
         return true;
+    }
+
+    public function saveLoginRecord($userInfo, $ip)
+    {
+        $data['last_login_ip']      = $ip;
+        $data['last_login_time']    = date("Y-m-d H:i:s");
+        $this->where("id" , $userInfo['id'])->update($data);
     }
 
 }

@@ -2,6 +2,7 @@
 namespace app\admin\controller;
 use think\Request;
 use app\admin\model\User as UserModel;
+use think\Config;
 class User extends AdminBaseController
 {
 
@@ -53,6 +54,10 @@ class User extends AdminBaseController
                     'insert_id'=>''
                 ]);
             }
+            $head_img = $this->request->post("head_img");
+            if(empty($head_img)){
+                $head_img =  Config::get("file_url")."/static/images/userface0.jpg";
+            }
             $data = [
                 'id'=>$parmas['id'],
                 'uname'=>$parmas['uname'],
@@ -60,7 +65,7 @@ class User extends AdminBaseController
                 'nickname'=>empty($parmas['nickname'])?$parmas['uname']:$parmas['nickname'],
                 'is_delete'=>$parmas['is_delete'],
                 'role_id'=>$parmas['role_id'],
-                'head_img'=>$parmas['head_img'],
+                'head_img'=>$head_img,
             ];
             $user = new UserModel();
             $ret = $user->addUser($data);
@@ -88,7 +93,7 @@ class User extends AdminBaseController
         return $this->fetch('user/userAdd', ['is_edit'=>1]);
     }
 
-
+    /*删除用户*/
     public function del()
     {
         if(request()->isPost()){
@@ -97,6 +102,47 @@ class User extends AdminBaseController
 
             $user = new UserModel();
             $ret = $user->delUser($id);
+            if($ret){
+                return json([
+                    'status'=>0,
+                    'msg'=>'ok',
+                ]);
+            }else{
+                return json([
+                    'status'=>1,
+                    'msg'=>'fail:'.$user->getError(),
+                ]);
+            }
+
+        }else{
+            return '';
+        }
+    }
+
+    /*编辑角色*/
+    public function saveRole()
+    {
+        if(request()->isPost()){
+            $params = request()->param();
+            $permInfo = $params;
+            $userModel = new UserModel();
+            $ret = $userModel->saveRole($permInfo);
+            return json(['msg'=>'ok', 'ret'=>$ret]);
+        }else{
+            $is_edit = $this->request->get("is_edit/d");
+            return $this->fetch("user/saveRole", ["is_edit"=>$is_edit]);
+        }
+    }
+
+
+    /*删除权限组*/
+    public function delRole()
+    {
+        if(request()->isPost()){
+            $parmas = request()->param();
+            $id = $parmas['id'];
+            $user = new UserModel();
+            $ret = $user->delRole($id);
             if($ret){
                 return json([
                     'status'=>0,
@@ -202,13 +248,18 @@ class User extends AdminBaseController
 
     public function getUserList()
     {
+
+        $page = $this->request->post("page/?d");
+        $limit = $this->request->post("limit/?d");
+        $keyWord = $this->request->post("search_key");
         $userModel = new UserModel();
-        $roleList = $userModel->getUserList();
+        $roleList = $userModel->getUserList($keyWord, $page, $limit);
+        $count = $userModel->getUserList($keyWord, $page, $limit, 1);
         //$this->ajaxReturn(['code'=>0, 'msg'=>0, 'count'=>count($ret), 'data'=>$ret]);
         $data = [
             'code'=>0,
             'msg'=>0,
-            'count'=>count($roleList),
+            'count'=>$count,
             'data'=>$roleList
         ];
         return json($data, 200);
@@ -217,13 +268,18 @@ class User extends AdminBaseController
 
     public function getRoleList()
     {
+        $page = $this->request->post("page/?d");
+        $limit = $this->request->post("limit/?d");
+        $keyWord = $this->request->post("search_key");
+
         $userModel = new UserModel();
-        $roleList = $userModel->getRoleList();
+        $roleList = $userModel->getRoleList($keyWord, $page, $limit);
+        $count = $userModel->getRoleList($keyWord, $page, $limit, 1);
         //$this->ajaxReturn(['code'=>0, 'msg'=>0, 'count'=>count($ret), 'data'=>$ret]);
         $data = [
           'code'=>0,
           'msg'=>0,
-          'count'=>count($roleList),
+          'count'=>$count,
           'data'=>$roleList
         ];
         return json($data, 200);

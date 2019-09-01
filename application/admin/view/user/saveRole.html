@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {include file="common/header" /}
+</head>
+<body class="childrenBody">
+<form class="layui-form" style="width:80%;">
+    <div class="layui-form-item layui-row layui-col-xs12">
+        <label class="layui-form-label">角色名</label>
+        <div class="layui-input-block">
+            <input type="hidden" class="layui-input" id="id">
+            <input type="text" class="layui-input" id="name" lay-verify="required" placeholder="请输入角色名" {eq name="is_edit" value="1"}readonly{/eq} >
+        </div>
+    </div>
+    <div class="layui-form-item layui-row layui-col-xs12">
+        <label class="layui-form-label">备注</label>
+        <div class="layui-input-block">
+            <input type="text" class="layui-input memo" placeholder="请输入备注">
+        </div>
+    </div>
+
+    <div class="layui-row">
+        <div class="magb15 layui-col-md4 layui-col-xs12">
+            <label class="layui-form-label">上级角色</label>
+            <div class="layui-input-block">
+                <select name="pid" class="pid" lay-filter="pid">
+                    <option value="1">超级用户</option>
+                    <option value="2">普通管理员</option>
+                </select>
+            </div>
+        </div>
+        <div class="magb15 layui-col-md4 layui-col-xs12">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <select name="is_delete" class="is_delete" lay-filter="is_delete">
+                    <option value="0">正常</option>
+                    <option value="1">删除</option>
+                    <option value="2">禁用</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-form-item layui-row layui-col-xs12">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-sm" lay-submit="" lay-filter="addRole">{eq name="is_edit" value="1"}保存{else/}添加{/eq}</button>
+            <button type="reset" class="layui-btn layui-btn-sm layui-btn-primary">取消</button>
+        </div>
+    </div>
+</form>
+
+
+{include file="common/footer" /}
+<script>
+    layui.use(['form','layer', 'upload'],function(){
+        var form = layui.form
+        var layer = parent.layer === undefined ? layui.layer : top.layer;
+        var $ = layui.jquery;
+
+        form.on("submit(addRole)",function(data){
+            //弹出loading
+            var alert_index = layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
+            var post_data = {
+                id : $("#id").val(),  //id
+                name : $("#name").val(),  //登录名
+                memo : $(".memo").val(),  //密码
+                pid  : data.field.pid,  //密码
+                is_delete : data.field.is_delete    //用户状态
+            };
+            // 实际使用时的提交信息
+            $.post("/admin/user/saveRole",post_data,function(res){
+                layer.close(alert_index);
+                if(res.status == 1){
+                    layer.alert(res.msg);
+                }else{
+                    self_lay_index = parent.layer.getFrameIndex(window.name);
+                    layer.style(self_lay_index, {
+                        display:"none"
+                    });
+                    setTimeout(function(){
+                        if(post_data.id > 0){
+                            parent.layui.layer.msg("用户保存成功！");
+                        }else{
+                            parent.layui.layer.msg("用户添加成功！");
+                        }
+                        parent.layui.table.reload("role-list");
+                        layer.closeAll("iframe");
+                    }, 1000)
+                }
+            });
+
+            return false;
+        });
+
+    })
+</script>
+</body>
+</html>

@@ -21,14 +21,14 @@
     <div class="layui-form-item layui-row layui-col-xs12">
         <label class="layui-form-label">密码</label>
         <div class="layui-input-block">
-            <input type="text" class="layui-input upass" lay-verify="required" placeholder="请输入邮箱">
+            <input type="text" class="layui-input upass" lay-verify="required" placeholder="请输入密码">
         </div>
     </div>
     <div class="layui-row">
         <div class="magb15 layui-col-md4 layui-col-xs12">
             <label class="layui-form-label">用户组别</label>
             <div class="layui-input-block">
-                <select name="userRole" class="userRole" lay-filter="userRole">
+                <select name="role_id" class="role_id" lay-filter="role_id">
                     <option value="1">超级用户</option>
                     <option value="2">普通管理员</option>
                 </select>
@@ -37,7 +37,7 @@
         <div class="magb15 layui-col-md4 layui-col-xs12">
             <label class="layui-form-label">状态</label>
             <div class="layui-input-block">
-                <select name="userStatus" class="userStatus" lay-filter="userStatus">
+                <select name="is_delete" class="is_delete" lay-filter="is_delete">
                     <option value="0">正常</option>
                     <option value="1">删除</option>
                     <option value="2">禁用</option>
@@ -72,8 +72,8 @@
 <script>
     layui.use(['form','layer', 'upload'],function(){
         var form = layui.form
-        layer = parent.layer === undefined ? layui.layer : top.layer,
-                $ = layui.jquery;
+        var layer = parent.layer === undefined ? layui.layer : top.layer;
+        var $ = layui.jquery;
         var upload = layui.upload;
 
         //执行实例
@@ -101,31 +101,36 @@
         });
 
         form.on("submit(addUser)",function(data){
-            console.log(data)
             //弹出loading
-            var index = top.layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
+            var alert_index = layer.msg('数据提交中，请稍候',{icon: 16,time:false,shade:0.8});
             var post_data = {
-                id : $(".id").val(),  //登录名
+                id : $(".id").val(),  //id
                 uname : $(".uname").val(),  //登录名
                 upass : $(".upass").val(),  //密码
                 nickname : $(".nickname").val(),  //密码
-                is_delete : data.field.userStatus,    //用户状态
-                role_id   : data.field.userRole,
+                is_delete : data.field.is_delete,    //用户状态
+                role_id   : data.field.role_id,
                 head_img  : $("#head_img").val()
             };
             // 实际使用时的提交信息
              $.post("/admin/user/userAdd",post_data,function(res){
-                 console.log(res)
+                 layer.close(alert_index);
                 if(res.status == 1){
-                    top.layer.alert(res.msg);
+                    layer.alert(res.msg);
                 }else{
-                    top.layer.close(index);
-                    top.layer.msg("用户添加成功！");
-                    layer.closeAll("iframe");
+                    self_lay_index = parent.layer.getFrameIndex(window.name);
+                    layer.style(self_lay_index, {
+                        display:"none"
+                    });
                     setTimeout(function(){
-                        //刷新父页面
-                        parent.location.reload();
-                    },2000);
+                        if(post_data.id > 0){
+                            parent.layui.layer.msg("用户保存成功！");
+                        }else{
+                            parent.layui.layer.msg("用户添加成功！");
+                        }
+                        parent.layui.table.reload("user-list");
+                        layer.closeAll("iframe");
+                    }, 1000)
                 }
              });
 
